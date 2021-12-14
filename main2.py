@@ -23,16 +23,18 @@ import torchvision.transforms as transforms
 
 import custom_classes
 
+from detectron2.modelzoo import model_zoo
+
 parser = argparse.ArgumentParser(description='Barlow Twins Training')
 parser.add_argument('data', type=Path, metavar='DIR',
                     help='path to dataset')
-parser.add_argument('--workers', default=2, type=int, metavar='N',
+parser.add_argument('--workers', default=8, type=int, metavar='N',
                     help='number of data loader workers')
 parser.add_argument('--epochs', default=1000, type=int, metavar='N',
                     help='number of total epochs to run')
 parser.add_argument('--batch-size', default=24, type=int, metavar='N',
                     help='mini-batch size')
-parser.add_argument('--learning-rate-weights', default=0.1, type=float, metavar='LR',
+parser.add_argument('--learning-rate-weights', default=0.2, type=float, metavar='LR',
                     help='base learning rate for weights')
 parser.add_argument('--learning-rate-biases', default=0.0048, type=float, metavar='LR',
                     help='base learning rate for biases and batch norm parameters')
@@ -213,11 +215,12 @@ class BarlowTwins(nn.Module):
     def __init__(self, args):
         super().__init__()
         self.args = args
-        self.backbone = torchvision.models.resnet50(zero_init_residual=True)
-        self.backbone.fc = nn.Identity()
+
+        model = model_zoo.get("COCO-InstanceSegmentation/mask_rcnn_R_101_FPN_3x")  # HARD-CODED
+        self.backbone = model.backbone
 
         # projector
-        sizes = [2048] + list(map(int, args.projector.split('-')))
+        sizes = [1024] + list(map(int, args.projector.split('-')))  # HARD-CODED!
         layers = []
         for i in range(len(sizes) - 2):
             layers.append(nn.Linear(sizes[i], sizes[i + 1], bias=False))
@@ -230,8 +233,8 @@ class BarlowTwins(nn.Module):
         self.bn = nn.BatchNorm1d(sizes[-1], affine=False)
 
     def forward(self, y1, y2):
-        z1 = self.projector(self.backbone(y1))
-        z2 = self.projector(self.backbone(y2))
+        z1 = self.projector(self.backbone(y1)["res4"])   # HARD-CODED!
+        z2 = self.projector(self.backbone(y2)["res4"])
 
         # empirical cross-correlation matrix
         c = self.bn(z1).T @ self.bn(z2)
