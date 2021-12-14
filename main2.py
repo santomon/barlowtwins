@@ -226,7 +226,7 @@ class BarlowTwins(nn.Module):
         layers = []
         layers.append(nn.Conv2d(1024, 7, kernel_size=1,))  #dimensionality reduction
         layers.append(nn.ReLU(inplace=True))
-        layers.append(torch.flatten)
+        layers.append(nn.Flatten())
         for i in range(len(sizes) - 2):
             layers.append(nn.Linear(sizes[i], sizes[i + 1], bias=False))
             layers.append(nn.BatchNorm1d(sizes[i + 1]))
