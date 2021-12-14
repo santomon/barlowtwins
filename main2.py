@@ -218,11 +218,14 @@ class BarlowTwins(nn.Module):
 
         model = model_zoo.get("COCO-InstanceSegmentation/mask_rcnn_R_101_C4_3x.yaml")  # HARD-CODED
         self.backbone = model.backbone
+        print(self.backbone.output_shape())
 
 
         # projector
-        sizes = [1024] + list(map(int, args.projector.split('-')))  # HARD-CODED!
+        sizes = [1372] + list(map(int, args.projector.split('-')))  # HARD-CODED!
         layers = []
+        layers.append(nn.Conv2d(1024, 7, kernel_size=1,))  #dimensionality reduction
+        layers.append(nn.ReLU(inplace=True))
         for i in range(len(sizes) - 2):
             layers.append(nn.Linear(sizes[i], sizes[i + 1], bias=False))
             layers.append(nn.BatchNorm1d(sizes[i + 1]))
@@ -234,8 +237,13 @@ class BarlowTwins(nn.Module):
         self.bn = nn.BatchNorm1d(sizes[-1], affine=False)
 
     def forward(self, y1, y2):
-        z1 = self.projector(self.backbone(y1)["res4"])  # HARD-CODED!
-        z2 = self.projector(self.backbone(y2)["res4"])  # HARD-CODED!
+        r1 = self.backbone(y1)["res4"]
+        print(r1.shape)
+        r2 = self.backbone(y2)["res4"]
+        print(r2.shape)
+
+        z1 = self.projector(r1)  # HARD-CODED!
+        z2 = self.projector(r2)  # HARD-CODED!
 
         # empirical cross-correlation matrix
         c = self.bn(z1).T @ self.bn(z2)
