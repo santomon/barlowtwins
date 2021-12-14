@@ -23,7 +23,7 @@ import torchvision.transforms as transforms
 
 import custom_classes
 
-from detectron2.modelzoo import model_zoo
+from detectron2.model_zoo import model_zoo
 
 parser = argparse.ArgumentParser(description='Barlow Twins Training')
 parser.add_argument('data', type=Path, metavar='DIR',
