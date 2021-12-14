@@ -121,6 +121,9 @@ def main_worker(gpu, args):
     loader = torch.utils.data.DataLoader(
         train_set, batch_size=per_device_batch_size, num_workers=args.workers,
         pin_memory=True, sampler=sampler)
+    val_loader = torch.utils.data.DataLoader(
+        val_set, batch_size=per_device_batch_size, num_workers=args.workers,
+        pin_memory=True)
 
     start_time = time.time()
     scaler = torch.cuda.amp.GradScaler()
@@ -150,7 +153,7 @@ def main_worker(gpu, args):
 
                     with torch.no_grad():
                         total_val_loss = 0
-                        for val1, val2 in val_set:
+                        for val1, val2 in val_loader:
                             val1 = val1.cuda(gpu, non_blocking=True)
                             val2 = val2.cuda(gpu, non_blocking=True)
                             total_val_loss += model.forward(val1, val2)
