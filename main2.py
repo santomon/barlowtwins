@@ -216,8 +216,9 @@ class BarlowTwins(nn.Module):
         super().__init__()
         self.args = args
 
-        model = model_zoo.get("COCO-InstanceSegmentation/mask_rcnn_R_101_FPN_3x.yaml")  # HARD-CODED
+        model = model_zoo.get("COCO-InstanceSegmentation/mask_rcnn_R_101_C4_3x.yaml")  # HARD-CODED
         self.backbone = model.backbone
+
 
         # projector
         sizes = [1024] + list(map(int, args.projector.split('-')))  # HARD-CODED!
@@ -233,8 +234,8 @@ class BarlowTwins(nn.Module):
         self.bn = nn.BatchNorm1d(sizes[-1], affine=False)
 
     def forward(self, y1, y2):
-        z1 = self.projector(self.backbone(y1)["p6"])   # HARD-CODED!
-        z2 = self.projector(self.backbone(y2)["p6"])
+        z1 = self.projector(self.backbone(y1)["res4"])  # HARD-CODED!
+        z2 = self.projector(self.backbone(y2)["res4"])  # HARD-CODED!
 
         # empirical cross-correlation matrix
         c = self.bn(z1).T @ self.bn(z2)
