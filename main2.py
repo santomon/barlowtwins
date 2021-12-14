@@ -216,7 +216,7 @@ class BarlowTwins(nn.Module):
         super().__init__()
         self.args = args
 
-        model = model_zoo.get("COCO-InstanceSegmentation/mask_rcnn_R_101_C4_3x.yaml")  # HARD-CODED
+        model = model_zoo.get("COCO-InstanceSegmentation/mask_rcnn_R_101_FPN_3x.yaml")  # HARD-CODED
         self.backbone = model.backbone
 
         # projector
