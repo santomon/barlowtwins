@@ -14,7 +14,7 @@ class CustomSartorius(data.Dataset):
         self.img_list.sort()
 
     def __getitem__(self, index):
-        return self.transform(Image.open(os.path.join(self.dpath, self.img_list[index])).convert("RGB"))
+        return self.transform(Image.open(os.path.join(self.dpath, self.img_list[index])))
 
     def __len__(self):
         return len(self.img_list)
