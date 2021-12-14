@@ -127,7 +127,7 @@ def main_worker(gpu, args):
 
     start_time = time.time()
     scaler = torch.cuda.amp.GradScaler()
-    min_total_val_loss = 0
+    min_total_val_loss = None
 
     for epoch in range(start_epoch, args.epochs):
         sampler.set_epoch(epoch)
@@ -158,7 +158,10 @@ def main_worker(gpu, args):
                             val2 = val2.cuda(gpu, non_blocking=True)
                             total_val_loss += model.forward(val1, val2)
                         print('Validation loss:', total_val_loss)
-                        if total_val_loss < min_total_val_loss:
+                        if min_total_val_loss is None:
+                            min_total_val_loss = total_val_loss
+
+                        if total_val_loss <= min_total_val_loss:
                             print("Better Validation loss; Saving checkpoint...")
                             min_total_val_loss = total_val_loss
                             torch.save(model.module.backbone.state_dict(), args.checkpoint_dir / 'backbone.pth')
