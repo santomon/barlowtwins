@@ -110,16 +110,20 @@ def main_worker(gpu, args):
     else:
         start_epoch = 0
 
-    dataset = torchvision.datasets.ImageFolder(os.path.join(args.data), Transform())
-    sampler = torch.utils.data.distributed.DistributedSampler(dataset)
+    train_set = torchvision.datasets.ImageFolder(os.path.join(args.data, "train_semi_supervised"), Transform())
+    val_set = torchvision.datasets.ImageFolder(os.path.join(args.data, "train"), Transform())
+
+    sampler = torch.utils.data.distributed.DistributedSampler(train_set)
     assert args.batch_size % args.world_size == 0
     per_device_batch_size = args.batch_size // args.world_size
     loader = torch.utils.data.DataLoader(
-        dataset, batch_size=per_device_batch_size, num_workers=args.workers,
+        train_set, batch_size=per_device_batch_size, num_workers=args.workers,
         pin_memory=True, sampler=sampler)
 
     start_time = time.time()
     scaler = torch.cuda.amp.GradScaler()
+    min_total_val_loss = 0
+
     for epoch in range(start_epoch, args.epochs):
         sampler.set_epoch(epoch)
         for step, ((y1, y2), _) in enumerate(loader, start=epoch * len(loader)):
@@ -141,6 +145,19 @@ def main_worker(gpu, args):
                                  time=int(time.time() - start_time))
                     print(json.dumps(stats))
                     print(json.dumps(stats), file=stats_file)
+
+                    with torch.no_grad():
+                        total_val_loss = 0
+                        for val1, val2 in val_set:
+                            val1 = val1.cuda(gpu, non_blocking=True)
+                            val2 = val2.cuda(gpu, non_blocking=True)
+                            total_val_loss += model.forward(val1, val2)
+                        print('Validation loss:', total_val_loss)
+                        if total_val_loss < min_total_val_loss:
+                            print("Better Validation loss; Saving checkpoint...")
+                            min_total_val_loss = total_val_loss
+                            torch.save(model.module.backbone.state_dict(), args.checkpoint_dir / 'backbone.pth')
+
         if args.rank == 0:
             # save checkpoint
             state = dict(epoch=epoch + 1, model=model.state_dict(),
@@ -301,8 +318,8 @@ class Transform:
             GaussianBlur(p=1.0),
             Solarization(p=0.0),
             transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                 std=[0.229, 0.224, 0.225])
+            transforms.Normalize(mean=[127.9788 / 255, 127.9788 / 255, 127.9788 / 255],  # Mean and Std of Sartorius Cell Segmentation
+                                 std=[13.7051 / 255, 13.7051 / 255, 13.7051 / 255])
         ])
         self.transform_prime = transforms.Compose([
             transforms.RandomResizedCrop(224, interpolation=Image.BICUBIC),
@@ -316,14 +333,15 @@ class Transform:
             GaussianBlur(p=0.1),
             Solarization(p=0.2),
             transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                 std=[0.229, 0.224, 0.225])
+            transforms.Normalize(mean=[127.9788 / 255, 127.9788 / 255, 127.9788 / 255],
+                                 std=[13.7051 / 255, 13.7051 / 255, 13.7051 / 255])
         ])
 
     def __call__(self, x):
         y1 = self.transform(x)
         y2 = self.transform_prime(x)
         return y1, y2
+
 
 
 if __name__ == '__main__':

@@ -33,3 +33,6 @@ if __name__ == '__main__':
     mean = data.mean([0, 1, 2])
     std = data.std([0, 1, 2])
     print(mean, std)
+
+#computed mean and std for Sartorius dataset
+# mean:127.9788, std: 11.7118
