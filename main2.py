@@ -220,9 +220,9 @@ class BarlowTwins(nn.Module):
         self.backbone = model.backbone
 
         # projector
-        sizes = [1372] + list(map(int, args.projector.split('-')))  # HARD-CODED!
+        sizes = [1024] + list(map(int, args.projector.split('-')))  # HARD-CODED!
         layers = []
-        layers.append(nn.Conv2d(1024, 7, kernel_size=1,))  #dimensionality reduction
+        layers.append(nn.Conv2d(256, 64, kernel_size=1,))  #dimensionality reduction
         layers.append(nn.ReLU(inplace=True))
         layers.append(nn.Flatten())
         for i in range(len(sizes) - 2):
