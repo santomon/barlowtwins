@@ -18,7 +18,7 @@ class SartoriusNormDataSet(data.Dataset):
         self.img_list = os.listdir(dpath)
 
     def __getitem__(self, index):
-        return torch.Tensor(Image.open(os.path.join(self.dpath,self.img_list[index])))
+        return torch.as_tensor(Image.open(os.path.join(self.dpath,self.img_list[index])))
 
     def __len__(self):
         return len(self.dpath)
