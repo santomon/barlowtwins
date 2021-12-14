@@ -166,7 +166,7 @@ def main_worker(gpu, args):
                         if total_val_loss <= min_total_val_loss:
                             print("Better Validation loss; Saving checkpoint...")
                             min_total_val_loss = total_val_loss
-                            torch.save(model.module.backbone.state_dict(), args.checkpoint_dir / 'r101_fpn_validated.pth')  # HARD CODED
+                            torch.save(model.module.backbone.state_dict(), args.checkpoint_dir / 'r101_c4_validated.pth')  # HARD CODED
 
         if args.rank == 0:
             # save checkpoint
@@ -176,7 +176,7 @@ def main_worker(gpu, args):
     if args.rank == 0:
         # save final model
         torch.save(model.module.backbone.state_dict(),
-                   args.checkpoint_dir / 'r101_fpn.pth')  # HARD-CODED
+                   args.checkpoint_dir / 'r101_c4.pth')  # HARD-CODED
 
 
 def adjust_learning_rate(args, optimizer, loader, step):
