@@ -218,8 +218,6 @@ class BarlowTwins(nn.Module):
 
         model = model_zoo.get("COCO-InstanceSegmentation/mask_rcnn_R_101_C4_3x.yaml")  # HARD-CODED
         self.backbone = model.backbone
-        print(self.backbone.output_shape())
-
 
         # projector
         sizes = [1372] + list(map(int, args.projector.split('-')))  # HARD-CODED!
@@ -239,9 +237,9 @@ class BarlowTwins(nn.Module):
 
     def forward(self, y1, y2):
         r1 = self.backbone(y1)["res4"]
-        print(r1.shape)
+        # print(r1.shape)
         r2 = self.backbone(y2)["res4"]
-        print(r2.shape)
+        # print(r2.shape)
 
         z1 = self.projector(r1)  # HARD-CODED!
         z2 = self.projector(r2)  # HARD-CODED!
