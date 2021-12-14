@@ -21,6 +21,8 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 
+import custom_classes
+
 parser = argparse.ArgumentParser(description='Barlow Twins Training')
 parser.add_argument('data', type=Path, metavar='DIR',
                     help='path to dataset')
@@ -110,8 +112,8 @@ def main_worker(gpu, args):
     else:
         start_epoch = 0
 
-    train_set = torchvision.datasets.ImageFolder(os.path.join(args.data, "train_semi_supervised"), Transform())
-    val_set = torchvision.datasets.ImageFolder(os.path.join(args.data, "train"), Transform())
+    train_set = custom_classes.CustomSartorius(os.path.join(args.data, "train_semi_supervised"), Transform())
+    val_set = custom_classes.CustomSartorius(os.path.join(args.data, "train"), Transform())
 
     sampler = torch.utils.data.distributed.DistributedSampler(train_set)
     assert args.batch_size % args.world_size == 0
