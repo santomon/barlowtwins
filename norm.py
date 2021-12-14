@@ -22,13 +22,14 @@ class SartoriusNormDataSet(data.Dataset):
         return torch.as_tensor(np.array(Image.open(os.path.join(self.dpath,self.img_list[index]))), dtype=torch.float32)
 
     def __len__(self):
-        return len(self.dpath)
+        return len(self.img_list)
 
 
 if __name__ == '__main__':
     dataset = SartoriusNormDataSet(args.data_dir)
     dataloader = data.DataLoader(dataset, batch_size=len(dataset), shuffle=True, num_workers=1)
     data = next(iter(dataloader))
-    mean = data.mean([1, 2])
-    std = data.std([1, 2])
+    print(data.shape)
+    mean = data.mean([0, 1, 2])
+    std = data.std([0, 1, 2])
     print(mean, std)
