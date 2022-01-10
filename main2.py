@@ -166,7 +166,7 @@ def main_worker(gpu, args):
                         if total_val_loss <= min_total_val_loss:
                             print("Better Validation loss; Saving checkpoint...")
                             min_total_val_loss = total_val_loss
-                            torch.save(model.module.backbone.state_dict(), args.checkpoint_dir / 'r101_c4_validated.pth')  # HARD CODED
+                            torch.save(model.module.backbone.state_dict(), args.checkpoint_dir / 'r101_fpn_validated.pth')  # HARD CODED
 
         if args.rank == 0:
             # save checkpoint
@@ -176,7 +176,7 @@ def main_worker(gpu, args):
     if args.rank == 0:
         # save final model
         torch.save(model.module.backbone.state_dict(),
-                   args.checkpoint_dir / 'r101_c4.pth')  # HARD-CODED
+                   args.checkpoint_dir / 'r101_fpn.pth')  # HARD-CODED
 
 
 def adjust_learning_rate(args, optimizer, loader, step):
@@ -216,13 +216,13 @@ class BarlowTwins(nn.Module):
         super().__init__()
         self.args = args
 
-        model = model_zoo.get("COCO-InstanceSegmentation/mask_rcnn_R_101_C4_3x.yaml")  # HARD-CODED
+        model = model_zoo.get("COCO-InstanceSegmentation/mask_rcnn_R_101_FPN_3x.yaml")  # HARD-CODED
         self.backbone = model.backbone
 
         # projector
-        sizes = [1372] + list(map(int, args.projector.split('-')))  # HARD-CODED!
+        sizes = [1024] + list(map(int, args.projector.split('-')))  # HARD-CODED!
         layers = []
-        layers.append(nn.Conv2d(1024, 7, kernel_size=1,))  #dimensionality reduction
+        layers.append(nn.Conv2d(256, 64, kernel_size=1,))  #dimensionality reduction
         layers.append(nn.ReLU(inplace=True))
         layers.append(nn.Flatten())
         for i in range(len(sizes) - 2):
@@ -236,10 +236,10 @@ class BarlowTwins(nn.Module):
         self.bn = nn.BatchNorm1d(sizes[-1], affine=False)
 
     def forward(self, y1, y2):
-        r1 = self.backbone(y1)["res4"]
-        # print(r1.shape)
-        r2 = self.backbone(y2)["res4"]
-        # print(r2.shape)
+        r1 = self.backbone(y1)["p6"]
+        print(r1.shape)
+        r2 = self.backbone(y2)["p6"]
+        print(r2.shape)
 
         z1 = self.projector(r1)  # HARD-CODED!
         z2 = self.projector(r2)  # HARD-CODED!
