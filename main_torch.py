@@ -266,7 +266,7 @@ class BarlowTwins(nn.Module):
                 else:
                     concurrent = F.avg_pool2d(x[k] * 0 + concurrent, ceil_mode=True)
 
-        print(x["pool"].shape, concurrent.shape)
+        # print(x["pool"].shape, concurrent.shape)
         return x["pool"] + concurrent
 
 
