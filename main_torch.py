@@ -266,8 +266,6 @@ class BarlowTwins(nn.Module):
                     concurrent = nn.AvgPool2d(x[k] * 0) + concurrent
         return x["pool"] + concurrent
 
-        return x *
-
 
 class LARS(optim.Optimizer):
     def __init__(self, params, lr, weight_decay=0, momentum=0.9, eta=0.001,
