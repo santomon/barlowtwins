@@ -235,9 +235,9 @@ class BarlowTwins(nn.Module):
         self.bn = nn.BatchNorm1d(sizes[-1], affine=False)
 
     def forward(self, y1, y2):
-        r1 = self.backbone(y1)["pool"]
+        r1 = self.workaround_unneeded_outputs(self.backbone(y1))
         # print([(k, r1[k].shape) for k in r1.keys()])
-        r2 = self.backbone(y2)["pool"]
+        r2 = self.workaround_unneeded_outputs(self.backbone(y2))
         # print(r2.shape)
 
         z1 = self.projector(r1)  # HARD-CODED!
@@ -254,6 +254,19 @@ class BarlowTwins(nn.Module):
         off_diag = off_diagonal(c).pow_(2).sum()
         loss = on_diag + self.args.lambd * off_diag
         return loss
+
+    def workaround_unneeded_outputs(self, x):  # where x is the ordered dict resulting from the fpn
+
+        concurrent = None
+        for k in x.keys():
+            if k != 'pool':
+                if k == 0:
+                    concurrent = nn.AvgPool2d(x[k] * 0)
+                else:
+                    concurrent = nn.AvgPool2d(x[k] * 0) + concurrent
+        return x["pool"] + concurrent
+
+        return x *
 
 
 class LARS(optim.Optimizer):
