@@ -17,6 +17,7 @@ import time
 
 from PIL import Image, ImageOps, ImageFilter
 from torch import nn, optim
+from torch.nn import functional as F
 import torch
 import torchvision
 import torchvision.transforms as transforms
@@ -261,9 +262,9 @@ class BarlowTwins(nn.Module):
         for k in x.keys():
             if k != 'pool':
                 if k == "0":
-                    concurrent = nn.AvgPool2d(2)(x[k] * 0)
+                    concurrent = F.avg_pool2d(x[k] * 0, 2, ceil_mode=True)
                 else:
-                    concurrent = nn.AvgPool2d(2)(x[k] * 0 + concurrent)
+                    concurrent = F.avg_pool2d(x[k] * 0 + concurrent, ceil_mode=True)
 
         print(x["pool"].shape, concurrent.shape)
         return x["pool"] + concurrent
