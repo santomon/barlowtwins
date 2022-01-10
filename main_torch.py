@@ -221,10 +221,8 @@ class BarlowTwins(nn.Module):
         self.backbone = model.backbone
 
         # projector
-        sizes = [1372] + list(map(int, args.projector.split('-')))  # HARD-CODED!
+        sizes = [1024] + list(map(int, args.projector.split('-')))  # HARD-CODED!
         layers = []
-        layers.append(nn.Conv2d(1024, 7, kernel_size=1,))  #dimensionality reduction
-        layers.append(nn.ReLU(inplace=True))
         layers.append(nn.Flatten())
         for i in range(len(sizes) - 2):
             layers.append(nn.Linear(sizes[i], sizes[i + 1], bias=False))
@@ -237,10 +235,10 @@ class BarlowTwins(nn.Module):
         self.bn = nn.BatchNorm1d(sizes[-1], affine=False)
 
     def forward(self, y1, y2):
-        r1 = self.backbone(y1)
-        print(r1.shape)
-        r2 = self.backbone(y2)
-        print(r2.shape)
+        r1 = self.backbone(y1)["pool"]
+        print([(k, r1[k].shape) for k in r1.keys()])
+        r2 = self.backbone(y2)["pool"]
+        # print(r2.shape)
 
         z1 = self.projector(r1)  # HARD-CODED!
         z2 = self.projector(r2)  # HARD-CODED!
