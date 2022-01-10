@@ -260,7 +260,7 @@ class BarlowTwins(nn.Module):
         concurrent = None
         for k in x.keys():
             if k != 'pool':
-                if k == 0:
+                if k == "0":
                     concurrent = nn.AvgPool2d(x[k] * 0)
                 else:
                     concurrent = nn.AvgPool2d(x[k] * 0) + concurrent
