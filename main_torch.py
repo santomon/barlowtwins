@@ -353,8 +353,8 @@ class Transform:
             GaussianBlur(p=0.1),
             Solarization(p=0.2),
             transforms.ToTensor(),
-            transforms.Normalize(mean=[127.9788 / 255],
-                                 std=[13.7051 / 255])
+            transforms.Normalize(mean=[127.9788 / 255, 127.9788 / 255, 127.9788 / 255],
+                                 std=[13.7051 / 255, 13.7051 / 255, 13.7051 / 255])
         ])
 
     def __call__(self, x):
