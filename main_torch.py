@@ -237,9 +237,9 @@ class BarlowTwins(nn.Module):
         self.bn = nn.BatchNorm1d(sizes[-1], affine=False)
 
     def forward(self, y1, y2):
-        r1 = self.backbone(y1)["res4"]
+        r1 = self.backbone(y1)
         # print(r1.shape)
-        r2 = self.backbone(y2)["res4"]
+        r2 = self.backbone(y2)
         # print(r2.shape)
 
         z1 = self.projector(r1)  # HARD-CODED!
