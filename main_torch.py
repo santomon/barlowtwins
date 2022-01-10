@@ -236,7 +236,7 @@ class BarlowTwins(nn.Module):
 
     def forward(self, y1, y2):
         r1 = self.backbone(y1)["pool"]
-        print([(k, r1[k].shape) for k in r1.keys()])
+        # print([(k, r1[k].shape) for k in r1.keys()])
         r2 = self.backbone(y2)["pool"]
         # print(r2.shape)
 
