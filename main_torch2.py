@@ -235,8 +235,10 @@ class BarlowTwins(nn.Module):
         self.bn = nn.BatchNorm1d(sizes[-1], affine=False)
 
     def forward(self, y1, y2):
-        r1 = self.workaround_unneeded_outputs(self.backbone(y1))
-        # print([(k, r1[k].shape) for k in r1.keys()])
+        r1_ = self.backbone(y1)
+        print([(k, r1_[k].shape) for k in r1_.keys()])
+
+        r1 = self.workaround_unneeded_outputs(r1_)
         r2 = self.workaround_unneeded_outputs(self.backbone(y2))
         # print(r2.shape)
 
