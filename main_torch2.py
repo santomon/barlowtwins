@@ -222,6 +222,7 @@ class BarlowTwins(nn.Module):
         # projector
         sizes = [2048] + list(map(int, args.projector.split('-')))  # HARD-CODED!
         layers = []
+        layers.append(nn.AdaptiveAvgPool2d((1, 1)))
         layers.append(nn.Flatten())
         for i in range(len(sizes) - 2):
             layers.append(nn.Linear(sizes[i], sizes[i + 1], bias=False))
@@ -234,9 +235,9 @@ class BarlowTwins(nn.Module):
         self.bn = nn.BatchNorm1d(sizes[-1], affine=False)
 
     def forward(self, y1, y2):
-        r1 = self.backbone(y1)
-        print([(k, r1[k].shape) for k in r1.keys()])
-        r2 = self.backbone(y2)
+        r1 = self.workaround_unneeded_outputs(self.backbone(y1))
+        # print([(k, r1[k].shape) for k in r1.keys()])
+        r2 = self.workaround_unneeded_outputs(self.backbone(y2))
         # print(r2.shape)
 
         z1 = self.projector(r1)  # HARD-CODED!
@@ -258,7 +259,7 @@ class BarlowTwins(nn.Module):
 
         concurrent = None
         for k in x.keys():
-            if k != 'pool':
+            if k != '3':
                 if k == "0":
                     concurrent = F.avg_pool2d(x[k] * 0, 2, ceil_mode=True)
                 else:
