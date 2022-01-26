@@ -218,7 +218,7 @@ class BarlowTwins(nn.Module):
         model = torchvision.models.detection.maskrcnn_resnet50_fpn(pretrained=True,
                                                                    box_detections_per_img=540)  # HARD-CODED
         self.backbone = model.backbone.body
-        model.backbone.body.return_layers = {"layer4": "3"}
+        self.backbone.body.return_layers = {"layer4": "3"}
 
         # projector
         sizes = [2048] + list(map(int, args.projector.split('-')))  # HARD-CODED!
