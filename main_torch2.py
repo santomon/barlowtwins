@@ -257,18 +257,6 @@ class BarlowTwins(nn.Module):
         loss = on_diag + self.args.lambd * off_diag
         return loss
 
-    def workaround_unneeded_outputs(self, x):  # where x is the ordered dict resulting from the fpn; NOT USED IN THIS FILE
-
-        concurrent = None
-        for k in x.keys():
-            if k != '3':
-                if k == "0":
-                    concurrent = F.avg_pool2d(x[k] * 0, 2, ceil_mode=True)
-                else:
-                    concurrent = F.avg_pool2d(x[k] * 0 + concurrent, 2, ceil_mode=True)
-
-        # print(x["pool"].shape, concurrent.shape)
-        return x["pool"] + concurrent
 
 
 class LARS(optim.Optimizer):
