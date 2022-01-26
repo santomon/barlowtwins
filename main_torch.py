@@ -215,7 +215,8 @@ class BarlowTwins(nn.Module):
         super().__init__()
         self.args = args
 
-        model = torchvision.models.detection.maskrcnn_resnet50_fpn(pretrained=True,
+        model = torchvision.models.detection.maskrcnn_resnet50_fpn(pretrained=False,
+                                                                   pretrained_backbone=False,
                                                                    box_detections_per_img=540)  # HARD-CODED
         self.backbone = model.backbone
         print(self.backbone.return_layers)
@@ -235,9 +236,9 @@ class BarlowTwins(nn.Module):
         self.bn = nn.BatchNorm1d(sizes[-1], affine=False)
 
     def forward(self, y1, y2):
-        r1 = self.backbone(y1)
+        r1 = self.workaround_unneeded_outputs(self.backbone(y1))
         # print([(k, r1[k].shape) for k in r1.keys()])
-        r2 = self.backbone(y2)
+        r2 = self.workaround_unneeded_outputs(self.backbone(y2))
         # print(r2.shape)
 
         z1 = self.projector(r1)  # HARD-CODED!
