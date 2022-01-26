@@ -237,10 +237,10 @@ class BarlowTwins(nn.Module):
 
     def forward(self, y1, y2):
 
-        r1 = self.backbone(y1)["res5"]
-        # print(r1)
+        r1 = self.backbone(y1)#["res4"]
+        print(r1.keys())
         # print(r1.shape)
-        r2 = self.backbone(y2)["res5"]
+        r2 = self.backbone(y2)["res4"]
         # print(r2.shape)
 
         z1 = self.projector(r1)  # HARD-CODED!
