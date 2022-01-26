@@ -219,7 +219,6 @@ class BarlowTwins(nn.Module):
                                                                    pretrained_backbone=False,
                                                                    box_detections_per_img=540)  # HARD-CODED
         self.backbone = model.backbone
-        print(self.backbone.return_layers)
 
         # projector
         sizes = [4096] + list(map(int, args.projector.split('-')))  # HARD-CODED!
