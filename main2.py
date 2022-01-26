@@ -222,8 +222,8 @@ class BarlowTwins(nn.Module):
         # projector
         sizes = [1024] + list(map(int, args.projector.split('-')))  # HARD-CODED!
         layers = []
-        layers.append(nn.Conv2d(256, 64, kernel_size=1,))  #dimensionality reduction
-        layers.append(nn.ReLU(inplace=True))
+        layers.append(nn.AdaptiveAvgPool2d((1, 1)))  #dimensionality reduction
+        # layers.append(nn.ReLU(inplace=True))
         layers.append(nn.Flatten())
         for i in range(len(sizes) - 2):
             layers.append(nn.Linear(sizes[i], sizes[i + 1], bias=False))
