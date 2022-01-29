@@ -165,7 +165,7 @@ def main_worker(gpu, args):
                         if total_val_loss <= min_total_val_loss:
                             print("Better Validation loss; Saving checkpoint...")
                             min_total_val_loss = total_val_loss
-                            torch.save(model.module.backbone.state_dict(), args.checkpoint_dir / 'r50_scratch_validated.pth')  # HARD CODED
+                            torch.save(model.module.backbone.state_dict(), args.checkpoint_dir / 'r50_imagenet_validated.pth')  # HARD CODED
 
         if args.rank == 0:
             # save checkpoint
@@ -175,7 +175,7 @@ def main_worker(gpu, args):
     if args.rank == 0:
         # save final model
         torch.save(model.module.backbone.state_dict(),
-                   args.checkpoint_dir / 'r50_scratch.pth')  # HARD-CODED
+                   args.checkpoint_dir / 'r50_imagenet.pth')  # HARD-CODED
 
 
 def adjust_learning_rate(args, optimizer, loader, step):
@@ -216,7 +216,7 @@ class BarlowTwins(nn.Module):
         self.args = args
 
         model = torchvision.models.detection.maskrcnn_resnet50_fpn(pretrained=False,
-                                                                   pretrained_backbone=False,
+                                                                   pretrained_backbone=True,
                                                                    box_detections_per_img=540)  # HARD-CODED
         self.backbone = model.backbone.body
         self.backbone.return_layers = {"layer4": "3"}
