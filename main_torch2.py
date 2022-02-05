@@ -48,6 +48,8 @@ parser.add_argument('--print-freq', default=100, type=int, metavar='N',
 parser.add_argument('--checkpoint-dir', default=os.path.join(".", "checkpoint"), type=Path,
                     metavar='DIR', help='path to checkpoint directory')
 
+parser.add_argument("--pretrained", choices=["imagenet", "coco", "scratch"])
+
 
 def main():
     args = parser.parse_args()
@@ -165,17 +167,13 @@ def main_worker(gpu, args):
                         if total_val_loss <= min_total_val_loss:
                             print("Better Validation loss; Saving checkpoint...")
                             min_total_val_loss = total_val_loss
-                            torch.save(model.module.backbone.state_dict(), args.checkpoint_dir / 'r50_imagenet_validated.pth')  # HARD CODED
+                            torch.save(model.module.backbone.state_dict(), args.checkpoint_dir / 'checkpoint_validated.pth')  # HARD CODED
 
         if args.rank == 0:
             # save checkpoint
             state = dict(epoch=epoch + 1, model=model.state_dict(),
                          optimizer=optimizer.state_dict())
             torch.save(state, args.checkpoint_dir / 'checkpoint.pth')
-    if args.rank == 0:
-        # save final model
-        torch.save(model.module.backbone.state_dict(),
-                   args.checkpoint_dir / 'r50_imagenet.pth')  # HARD-CODED
 
 
 def adjust_learning_rate(args, optimizer, loader, step):
@@ -215,8 +213,11 @@ class BarlowTwins(nn.Module):
         super().__init__()
         self.args = args
 
-        model = torchvision.models.detection.maskrcnn_resnet50_fpn(pretrained=False,
-                                                                   pretrained_backbone=True,
+        pretrained = self.args.pretrained == "coco"
+        pretrained_backbone = self.args.pretrained_backbone == "imagenet"
+
+        model = torchvision.models.detection.maskrcnn_resnet50_fpn(pretrained=pretrained,
+                                                                   pretrained_backbone=pretrained_backbone,
                                                                    box_detections_per_img=540)  # HARD-CODED
         self.backbone = model.backbone.body
         self.backbone.return_layers = {"layer4": "3"}
