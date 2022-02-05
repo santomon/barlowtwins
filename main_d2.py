@@ -49,6 +49,9 @@ parser.add_argument('--print-freq', default=100, type=int, metavar='N',
 parser.add_argument('--checkpoint-dir', default=os.path.join(".", "checkpoint"), type=Path,
                     metavar='DIR', help='path to checkpoint directory')
 
+parser.add_argument("--base_model", choices=["C4", "FPN"], default="C4", type=str)
+
+parser.add_argument("--pretrained", action="store_true")
 
 def main():
     args = parser.parse_args()
@@ -166,17 +169,13 @@ def main_worker(gpu, args):
                         if total_val_loss <= min_total_val_loss:
                             print("Better Validation loss; Saving checkpoint...")
                             min_total_val_loss = total_val_loss
-                            torch.save(model.module.backbone.state_dict(), args.checkpoint_dir / 'r101_c4_validated.pth')  # HARD CODED
+                            torch.save(model.module.backbone.state_dict(), args.checkpoint_dir / 'checkpoint_validated.pth')  # HARD CODED
 
         if args.rank == 0:
             # save checkpoint
             state = dict(epoch=epoch + 1, model=model.state_dict(),
                          optimizer=optimizer.state_dict())
             torch.save(state, args.checkpoint_dir / 'checkpoint.pth')
-    if args.rank == 0:
-        # save final model
-        torch.save(model.module.backbone.state_dict(),
-                   args.checkpoint_dir / 'r101_c4.pth')  # HARD-CODED
 
 
 def adjust_learning_rate(args, optimizer, loader, step):
@@ -216,14 +215,23 @@ class BarlowTwins(nn.Module):
         super().__init__()
         self.args = args
 
-        model = model_zoo.get("COCO-InstanceSegmentation/mask_rcnn_R_101_C4_3x.yaml")  # HARD-CODED
-        self.backbone = model.backbone
+        self.models = {
+            "FPN": ("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml", 2048),  # tuple[1] refers to number of channels in the last layer
+            "C4": ("COCO-InstanceSegmentation/mask_rcnn_R_50_C4_3x.yaml", 1048)
+        }
+
+        model = model_zoo.get(self.models[self.args.base_model][0], trained=self.args.pretrained)  # HARD-CODED
+
+        if self.args.base_model == "FPN":
+            self.backbone = model.backbone.bottom_up
+        elif self.args.base_model == "C4":
+            self.backbone = model.backbone
 
         # projector
-        sizes = [1372] + list(map(int, args.projector.split('-')))  # HARD-CODED!
+        sizes = [self.models[self.args.base_model][1]] + list(map(int, args.projector.split('-')))  # HARD-CODED!
         layers = []
-        layers.append(nn.Conv2d(1024, 7, kernel_size=1,))  #dimensionality reduction
-        layers.append(nn.ReLU(inplace=True))
+        layers.append(nn.AdaptiveAvgPool2d((1, 1)))  #dimensionality reduction
+        # layers.append(nn.ReLU(inplace=True))
         layers.append(nn.Flatten())
         for i in range(len(sizes) - 2):
             layers.append(nn.Linear(sizes[i], sizes[i + 1], bias=False))
@@ -236,9 +244,11 @@ class BarlowTwins(nn.Module):
         self.bn = nn.BatchNorm1d(sizes[-1], affine=False)
 
     def forward(self, y1, y2):
-        r1 = self.backbone(y1)["res4"]
+
+        r1 = self.backbone(y1)["res5"]
+        # print(r1.keys())
         # print(r1.shape)
-        r2 = self.backbone(y2)["res4"]
+        r2 = self.backbone(y2)["res5"]
         # print(r2.shape)
 
         z1 = self.projector(r1)  # HARD-CODED!
@@ -352,8 +362,8 @@ class Transform:
             GaussianBlur(p=0.1),
             Solarization(p=0.2),
             transforms.ToTensor(),
-            transforms.Normalize(mean=[127.9788 / 255, 127.9788 / 255, 127.9788 / 255],
-                                 std=[13.7051 / 255, 13.7051 / 255, 13.7051 / 255])
+            transforms.Normalize(mean=[127.9788 / 255],
+                                 std=[13.7051 / 255])
         ])
 
     def __call__(self, x):
