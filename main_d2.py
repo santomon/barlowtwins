@@ -217,7 +217,7 @@ class BarlowTwins(nn.Module):
 
         self.models = {
             "FPN": ("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml", 2048),  # tuple[1] refers to number of channels in the last layer
-            "C4": ("COCO-InstanceSegmentation/mask_rcnn_R_50_C4_3x.yaml", 1048)
+            "C4": ("COCO-InstanceSegmentation/mask_rcnn_R_50_C4_3x.yaml", 1024)
         }
 
         model = model_zoo.get(self.models[self.args.base_model][0], trained=self.args.pretrained)  # HARD-CODED
