@@ -248,7 +248,7 @@ class BarlowTwins(nn.Module):
         r1 = self.backbone(y1)[self.models[self.args.base_model][2]]
         # print(r1.keys())
         # print(r1.shape)
-        r2 = self.backbone(y2)["res5"]
+        r2 = self.backbone(y2)[self.models[self.args.base_model][2]]
         # print(r2.shape)
 
         z1 = self.projector(r1)  # HARD-CODED!
