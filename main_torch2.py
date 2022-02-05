@@ -214,7 +214,7 @@ class BarlowTwins(nn.Module):
         self.args = args
 
         pretrained = self.args.pretrained == "coco"
-        pretrained_backbone = self.args.pretrained_backbone == "imagenet"
+        pretrained_backbone = self.args.pretrained == "imagenet"
 
         model = torchvision.models.detection.maskrcnn_resnet50_fpn(pretrained=pretrained,
                                                                    pretrained_backbone=pretrained_backbone,
