@@ -216,8 +216,8 @@ class BarlowTwins(nn.Module):
         self.args = args
 
         self.models = {
-            "FPN": ("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml", 2048),  # tuple[1] refers to number of channels in the last layer
-            "C4": ("COCO-InstanceSegmentation/mask_rcnn_R_50_C4_3x.yaml", 1024)
+            "FPN": ("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml", 2048, "res5"),  # tuple[1] refers to number of channels in the last layer
+            "C4": ("COCO-InstanceSegmentation/mask_rcnn_R_50_C4_3x.yaml", 1024, "res4")  # tuple[2] refers to the name of the last layer
         }
 
         model = model_zoo.get(self.models[self.args.base_model][0], trained=self.args.pretrained)  # HARD-CODED
@@ -245,7 +245,7 @@ class BarlowTwins(nn.Module):
 
     def forward(self, y1, y2):
 
-        r1 = self.backbone(y1)["res5"]
+        r1 = self.backbone(y1)[self.models[self.args.base_model][2]]
         # print(r1.keys())
         # print(r1.shape)
         r2 = self.backbone(y2)["res5"]
