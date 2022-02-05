@@ -48,6 +48,8 @@ parser.add_argument('--print-freq', default=100, type=int, metavar='N',
 parser.add_argument('--checkpoint-dir', default=os.path.join(".", "checkpoint"), type=Path,
                     metavar='DIR', help='path to checkpoint directory')
 
+parser.add_argument("--pretrained", choices=["imagenet", "coco", "scratch"])
+
 
 def main():
     args = parser.parse_args()
@@ -165,17 +167,13 @@ def main_worker(gpu, args):
                         if total_val_loss <= min_total_val_loss:
                             print("Better Validation loss; Saving checkpoint...")
                             min_total_val_loss = total_val_loss
-                            torch.save(model.module.backbone.state_dict(), args.checkpoint_dir / 'r50_fpn_scratch_validated.pth')  # HARD CODED
+                            torch.save(model.module.backbone.state_dict(), args.checkpoint_dir / 'checkpoint_validated.pth')  # HARD CODED
 
         if args.rank == 0:
             # save checkpoint
             state = dict(epoch=epoch + 1, model=model.state_dict(),
                          optimizer=optimizer.state_dict())
             torch.save(state, args.checkpoint_dir / 'checkpoint.pth')
-    if args.rank == 0:
-        # save final model
-        torch.save(model.module.backbone.state_dict(),
-                   args.checkpoint_dir / 'r50_fpn_scratch.pth')  # HARD-CODED
 
 
 def adjust_learning_rate(args, optimizer, loader, step):
@@ -215,14 +213,19 @@ class BarlowTwins(nn.Module):
         super().__init__()
         self.args = args
 
-        model = torchvision.models.detection.maskrcnn_resnet50_fpn(pretrained=False,
-                                                                   pretrained_backbone=False,
+        pretrained = self.args.pretrained == "coco"
+        pretrained_backbone = self.args.pretrained == "imagenet"
+
+        model = torchvision.models.detection.maskrcnn_resnet50_fpn(pretrained=pretrained,
+                                                                   pretrained_backbone=pretrained_backbone,
                                                                    box_detections_per_img=540)  # HARD-CODED
-        self.backbone = model.backbone
+        self.backbone = model.backbone.body
+        self.backbone.return_layers = {"layer4": "3"}
 
         # projector
-        sizes = [4096] + list(map(int, args.projector.split('-')))  # HARD-CODED!
+        sizes = [2048] + list(map(int, args.projector.split('-')))  # HARD-CODED!
         layers = []
+        layers.append(nn.AdaptiveAvgPool2d((1, 1)))
         layers.append(nn.Flatten())
         for i in range(len(sizes) - 2):
             layers.append(nn.Linear(sizes[i], sizes[i + 1], bias=False))
@@ -235,9 +238,10 @@ class BarlowTwins(nn.Module):
         self.bn = nn.BatchNorm1d(sizes[-1], affine=False)
 
     def forward(self, y1, y2):
-        r1 = self.workaround_unneeded_outputs(self.backbone(y1))
-        # print([(k, r1[k].shape) for k in r1.keys()])
-        r2 = self.workaround_unneeded_outputs(self.backbone(y2))
+        r1 = self.backbone(y1)["3"]
+        # print([(k, r1_[k].shape) for k in r1_.keys()])
+
+        r2 = self.backbone(y2)['3']
         # print(r2.shape)
 
         z1 = self.projector(r1)  # HARD-CODED!
@@ -255,18 +259,6 @@ class BarlowTwins(nn.Module):
         loss = on_diag + self.args.lambd * off_diag
         return loss
 
-    def workaround_unneeded_outputs(self, x):  # where x is the ordered dict resulting from the fpn
-
-        concurrent = None
-        for k in x.keys():
-            if k != 'pool':
-                if k == "0":
-                    concurrent = F.avg_pool2d(x[k] * 0, 2, ceil_mode=True)
-                else:
-                    concurrent = F.avg_pool2d(x[k] * 0 + concurrent, 2, ceil_mode=True)
-
-        # print(x["pool"].shape, concurrent.shape)
-        return x["pool"] + concurrent
 
 
 class LARS(optim.Optimizer):
